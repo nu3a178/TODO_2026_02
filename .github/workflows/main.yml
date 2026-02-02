@@ -7,5 +7,5 @@ jobs:
     name: test
     runs-on : ubuntu-latest
     steps:
-        - name: console
-          run: console.log("test")
+        - name: test helloworld
+          run: make test
