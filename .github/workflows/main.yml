@@ -32,6 +32,12 @@ jobs:
         run: npm ci
       - name: Run build
         run: npm run build
+      - name: Save artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 1
         
   deploy:
     name: deploy
@@ -53,6 +59,11 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=${{ github.workspace }}/firebase-key.json" >> $GITHUB_ENV
       - name: change space
         run: ./node_modules/.bin/firebase use ${{ secrets.FIREBASE_PROJECT_ID }}
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
       - name : Deploy to firebase Hosting
         run: |
           ./node_modules/.bin/firebase deploy
