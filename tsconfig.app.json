@@ -31,7 +31,11 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "paths":{
+    "@/*":["./src/*"]
   },
-  "include": ["src","./vitest-setup.ts"]
+  },
+
+  "include": ["src", "./vitest-setup.ts", "utils"]
 }
