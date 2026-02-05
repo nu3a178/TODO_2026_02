@@ -10,12 +10,12 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["node",  "@testing-library/jest-dom","vite/client"],
+    "types": ["node", "vite/client"],
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
 
     /* Bundler mode */
@@ -37,5 +37,6 @@
   },
   },
 
-  "include": ["src", "./vitest-setup.ts", "utils"]
+  "include": ["src", "utils"],
+  "exclude": ["src/tests", "**/*.spec.ts", "**/*.spec.tsx", "**/*.test.ts", "**/*.test.tsx"]
 }

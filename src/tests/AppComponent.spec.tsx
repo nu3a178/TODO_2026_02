@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
+/// <reference types="@testing-library/jest-dom" />
 import { expect, test } from "vitest";
 import { render, screen } from "@testing-library/react";
 import App from "../App";
-import { Provider } from "@/components/ui/provider";
+import { Provider } from "../components/ui/provider";
 
 test("title is HelloWorld", async () => {
   render(

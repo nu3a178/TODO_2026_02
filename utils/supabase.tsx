@@ -16,6 +16,7 @@ export const getRecords = async (): Promise<Array<Todo>> => {
     title,
     time,
   }));
+  console.log(result);
   return result;
 };
 
@@ -27,11 +28,14 @@ export const insertRecord = async (title: string, time: number) => {
 
   return result;
 };
-export const deleteRecord = async (title: string) => {
+export const deleteRecord = async (id: string) => {
   const result = await supabase
     .from("study-records")
     .delete()
-    .eq("title", title);
-  console.log(result);
+    .eq("id", id)
+    .then((res) => {
+      console.log(res);
+      return res;
+    });
   return result;
 };

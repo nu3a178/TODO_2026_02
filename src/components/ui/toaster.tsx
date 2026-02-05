@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import {
-  Toaster as ChakraToasterBase,
+  Toaster as ChakraToaster,
   Portal,
   Spinner,
   Stack,
@@ -11,19 +10,6 @@ import {
   Text,
   Button,
 } from "@chakra-ui/react";
-import type {
-  ToasterProps as ChakraToasterProps,
-  CreateToasterReturn,
-} from "@chakra-ui/react";
-import type { FC, ReactElement } from "react";
-
-interface CustomChakraToasterProps extends ChakraToasterProps {
-  children?: (toast: any) => ReactElement;
-  toaster: ReturnType<typeof CreateToasterReturn>; // createToaster の戻り値の型
-}
-
-export const ChakraToasterWithType =
-  ChakraToasterBase as FC<CustomChakraToasterProps>;
 
 export const toaster = createToaster({
   placement: "bottom-end",
@@ -33,7 +19,7 @@ export const toaster = createToaster({
 export const Toaster = () => {
   return (
     <Portal>
-      <ChakraToasterWithType toaster={toaster}>
+      <ChakraToaster toaster={toaster}>
         {(toast) => (
           <Toast.Root width={{ md: "sm" }} insetInline={{ mdDown: "4" }}>
             {toast.type === "loading" ? (
@@ -59,7 +45,7 @@ export const Toaster = () => {
             {toast.meta?.closable && <Toast.CloseTrigger />}
           </Toast.Root>
         )}
-      </ChakraToasterWithType>
+      </ChakraToaster>
     </Portal>
   );
 };
