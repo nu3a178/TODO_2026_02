@@ -76,7 +76,7 @@ const App = () => {
 
       <Modal
         title="学習記録を登録"
-        label="登録"
+        label="新規登録"
         isOpenControllable={true}
         isOpen={isOpen}
         setIsOpen={setIsOpen}
@@ -88,6 +88,7 @@ const App = () => {
         >
           <Stack spaceY={4}>
             <Input
+              data-testid="title"
               {...register("title", {
                 required: "学習内容が入力されていません",
               })}
@@ -95,8 +96,9 @@ const App = () => {
             />
             <Text color="red">{errors.title?.message}</Text>
             <Input
+              data-testid="time"
               {...register("time", {
-                required: "時間が入力されていません",
+                required: "学習時間が入力されていません",
                 min: { value: 0, message: "0以上の値を入力してください" },
               })}
               placeholder="学習時間"
@@ -104,17 +106,22 @@ const App = () => {
             />
             <Text color="red">{errors.time?.message}</Text>
 
-            <PrimaryButton type="submit" label="登録" loading={isLoading} />
+            <PrimaryButton
+              data-testid="registerButton"
+              type="submit"
+              label="登録"
+              loading={isLoading}
+            />
           </Stack>
         </form>
       </Modal>
 
       <Box p="4" bg="gray.200" borderWidth="2px" borderRadius="8px" shadow="lg">
         {isLoading ? (
-          <Spinner />
+          <Spinner data-testid="loading" />
         ) : (
           <>
-            <List.Root as="ul" listStylePosition="inside">
+            <List.Root as="ul" listStylePosition="inside" data-testid="records">
               {todos.length > 0 &&
                 todos.map((todo) => (
                   <List.Item key={todo.id}>
