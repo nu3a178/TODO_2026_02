@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /// <reference types="@testing-library/jest-dom" />
-import { expect, test, vi, beforeEach, describe } from "vitest";
+import { expect, test, vi, beforeEach, describe, afterEach } from "vitest";
 import {
   act,
   cleanup,
@@ -10,7 +10,7 @@ import {
 } from "@testing-library/react";
 import App from "../App";
 import { Provider } from "../components/ui/provider";
-import { insertRecord, deleteRecord } from "../../utils/supabase";
+import { insertRecord, deleteRecord, editRecord } from "../../utils/supabase";
 
 vi.mock("../../utils/supabase", async () => {
   return {
@@ -20,17 +20,22 @@ vi.mock("../../utils/supabase", async () => {
     ]),
     insertRecord: vi.fn(),
     deleteRecord: vi.fn(),
+    editRecord: vi.fn(),
   };
 });
 
 beforeEach(() => {
-  cleanup();
   render(
     <Provider>
       <App />
     </Provider>,
   );
 });
+
+afterEach(() => {
+  cleanup();
+});
+
 test("タイトルがあること", async () => {
   const target = await screen.findByRole("heading", { level: 1 });
   expect(target).toHaveTextContent("学習記録アプリ");
@@ -120,8 +125,44 @@ describe("学習時間がないときに登録するとエラーになること"
 });
 test("削除ができること", async () => {
   const deleteButtons = await screen.findAllByRole("button", { name: "削除" });
-  act(() => {
+  await act(() => {
     deleteButtons[0].click();
   });
   expect(deleteRecord).toHaveBeenCalledWith("test-1");
+});
+
+test("編集モーダルが表示されること", async () => {
+  const editButtons = await screen
+    .findAllByRole("button", { name: "編集" })
+    .then((res) => res[0]);
+  expect(editButtons).toBeInTheDocument();
+  await act(() => {
+    editButtons.click();
+  });
+
+  const modalTitles = await screen.findAllByText("学習記録を編集");
+  expect(modalTitles[0]).toBeInTheDocument();
+});
+
+test("編集が可能なこと", async () => {
+  const editButtons = await screen
+    .findAllByRole("button", { name: "編集" })
+    .then((res) => res[0]);
+  expect(editButtons).toBeInTheDocument();
+  await act(() => {
+    editButtons.click();
+  });
+  const editTitleInput = await screen.findByTestId("editTitle");
+  const editTimeInput = await screen.findByTestId("editTime");
+
+  expect(editTitleInput).toHaveValue("test1");
+  expect(editTimeInput).toHaveValue(1);
+
+  const editButton = await screen.findByRole("button", { name: "編集を確定" });
+  await act(() => {
+    fireEvent.change(editTitleInput, { target: { value: "test11" } });
+    fireEvent.change(editTimeInput, { target: { value: 11 } });
+    editButton.click();
+  });
+  expect(editRecord).toHaveBeenCalledWith("test-1", "test11", "11");
 });

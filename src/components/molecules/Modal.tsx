@@ -4,11 +4,12 @@ import { PrimaryButton } from "../atoms/PrimaryButton";
 
 type Props = {
   title: string;
-  label: string;
+  label?: string;
   children: ReactNode;
   isOpenControllable?: boolean;
   isOpen?: boolean;
   setIsOpen?: (bool: boolean) => void;
+  hideTrigger?: boolean;
 };
 export const Modal = memo((props: Props) => {
   const {
@@ -18,6 +19,7 @@ export const Modal = memo((props: Props) => {
     isOpenControllable,
     isOpen,
     setIsOpen,
+    hideTrigger = false,
   } = props;
   return (
     <Dialog.Root
@@ -29,13 +31,15 @@ export const Modal = memo((props: Props) => {
           onOpenChange: (e) => setIsOpen(e.open),
         })}
     >
-      <Dialog.Trigger asChild>
-        <PrimaryButton
-          label={label}
-          {...(isOpenControllable &&
-            setIsOpen && { onClick: () => setIsOpen(true) })}
-        ></PrimaryButton>
-      </Dialog.Trigger>
+      {!hideTrigger && (
+        <Dialog.Trigger asChild>
+          <PrimaryButton
+            label={label}
+            {...(isOpenControllable &&
+              setIsOpen && { onClick: () => setIsOpen(true) })}
+          ></PrimaryButton>
+        </Dialog.Trigger>
+      )}
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>

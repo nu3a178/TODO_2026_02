@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Flex,
   Heading,
   Input,
   List,
@@ -8,7 +9,12 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { deleteRecord, getRecords, insertRecord } from "../utils/supabase";
+import {
+  deleteRecord,
+  editRecord,
+  getRecords,
+  insertRecord,
+} from "../utils/supabase";
 import { useCallback, useEffect, useState } from "react";
 import { Todo } from "@/types/api/todo";
 import { Modal } from "./components/molecules/Modal";
@@ -16,8 +22,9 @@ import { useForm } from "react-hook-form";
 import { PrimaryButton } from "./components/atoms/PrimaryButton";
 
 type Inputs = {
+  id?: string;
   title: string;
-  time: number;
+  time: string;
 };
 
 const App = () => {
@@ -26,12 +33,12 @@ const App = () => {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<Inputs>();
+    setValue,
+  } = useForm<Inputs>({});
 
   const [todos, setTodos] = useState<Array<Todo>>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isOpen, setIsOpen] = useState(false);
-
+  const [inputMode, setInputMode] = useState<"add" | "edit" | "none">("none");
   const totalTime =
     todos.length > 0
       ? todos
@@ -51,12 +58,19 @@ const App = () => {
   const onClickAdd = useCallback(async (data: Inputs) => {
     const { title, time } = data;
     await insertRecord(title, time);
-    setIsOpen(false);
+    setInputMode("none");
     setIsLoading(true);
   }, []);
 
   const onClickDelete = useCallback(async (id: string) => {
     await deleteRecord(id);
+    setIsLoading(true);
+  }, []);
+
+  const onClickEdit = useCallback(async (data: Inputs) => {
+    const { id, title, time } = data;
+    await editRecord(id!, title, time);
+    setInputMode("none");
     setIsLoading(true);
   }, []);
 
@@ -67,83 +81,175 @@ const App = () => {
   }, [isLoading]);
 
   useEffect(() => {
-    reset();
-  }, [isOpen, reset]);
+    if (inputMode === "none") {
+      reset();
+    }
+  }, [inputMode, reset]);
 
   return (
-    <Box w="460px" spaceY={8} p={8}>
-      <Heading as="h1">学習記録アプリ</Heading>
+    <Box spaceY={8} p={8}>
+      <Stack align="center">
+        <Heading as="h1">学習記録アプリ</Heading>
+        <PrimaryButton
+          label="新規登録"
+          onClick={() => {
+            setInputMode("add");
+          }}
+        />
+        <Box
+          p="4"
+          bg="gray.200"
+          borderWidth="2px"
+          borderRadius="8px"
+          shadow="lg"
+          maxW="60vw"
+        >
+          {isLoading ? (
+            <Spinner data-testid="loading" />
+          ) : (
+            <>
+              <List.Root as="ul" data-testid="records" pl={4} spaceY={2}>
+                {todos.length > 0 &&
+                  todos.map((todo) => (
+                    <List.Item key={todo.id}>
+                      <Flex justify="space-between" spaceX={4}>
+                        <Text>{`${todo.title} : ${todo.time}時間`}</Text>
+                        <Stack direction="row">
+                          <Button
+                            bg="gray.400"
+                            _hover={{ opacity: 0.8 }}
+                            onClick={() => {
+                              onClickDelete(todo.id!);
+                            }}
+                          >
+                            削除
+                          </Button>
+                          <PrimaryButton
+                            label="編集"
+                            onClick={() => {
+                              setValue("id", todo.id ?? "");
+                              setValue("title", todo.title ?? "");
+                              setValue("time", todo.time?.toString() ?? "");
+                              setInputMode("edit");
+                            }}
+                          />
+                        </Stack>
+                      </Flex>
+                    </List.Item>
+                  ))}
+              </List.Root>
+            </>
+          )}
+          <p style={{ padding: "4px" }}>{`合計  ${totalTime}/1000 時間`}</p>
+        </Box>
+      </Stack>
 
       <Modal
-        title="学習記録を登録"
-        label="新規登録"
+        title={`学習記録を${inputMode === "add" ? "登録" : ""}${inputMode === "edit" ? "編集" : ""}`}
+        hideTrigger={true}
         isOpenControllable={true}
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
+        isOpen={["edit", "add"].includes(inputMode)}
+        setIsOpen={(bool) => {
+          if (!bool) {
+            setInputMode("none");
+            reset();
+          }
+        }}
       >
-        <form
-          onSubmit={handleSubmit((data) => {
-            onClickAdd(data);
-          })}
-        >
-          <Stack spaceY={4}>
-            <Input
-              data-testid="title"
-              {...register("title", {
-                required: "学習内容が入力されていません",
-              })}
-              placeholder="学習内容"
-            />
-            <Text color="red">{errors.title?.message}</Text>
-            <Input
-              data-testid="time"
-              {...register("time", {
-                required: "学習時間が入力されていません",
-                min: { value: 0, message: "0以上の値を入力してください" },
-              })}
-              placeholder="学習時間"
-              type="number"
-            />
-            <Text color="red">{errors.time?.message}</Text>
-
-            <PrimaryButton
-              data-testid="registerButton"
-              type="submit"
-              label="登録"
-              loading={isLoading}
-            />
-          </Stack>
-        </form>
-      </Modal>
-
-      <Box p="4" bg="gray.200" borderWidth="2px" borderRadius="8px" shadow="lg">
-        {isLoading ? (
-          <Spinner data-testid="loading" />
-        ) : (
+        {inputMode === "add" && (
           <>
-            <List.Root as="ul" listStylePosition="inside" data-testid="records">
-              {todos.length > 0 &&
-                todos.map((todo) => (
-                  <List.Item key={todo.id}>
-                    {`${todo.title} : ${todo.time}時間`}
-                    <Button
-                      bg="gray.400"
-                      _hover={{ opacity: 0.8 }}
-                      m={2}
-                      h="25px"
-                      onClick={() => {
-                        onClickDelete(todo.id!);
-                      }}
-                    >
-                      削除
-                    </Button>
-                  </List.Item>
-                ))}
-            </List.Root>
+            <form
+              onSubmit={handleSubmit((data) => {
+                onClickAdd(data);
+              })}
+            >
+              <Stack spaceY={4}>
+                <Input
+                  data-testid="title"
+                  {...register("title", {
+                    required: "学習内容が入力されていません",
+                  })}
+                  placeholder="学習内容"
+                />
+
+                <Text color="red">{errors.title?.message}</Text>
+                <Input
+                  data-testid="time"
+                  {...register("time", {
+                    required: "学習時間が入力されていません",
+                    min: { value: 0, message: "0以上の値を入力してください" },
+                  })}
+                  placeholder="学習時間"
+                  type="number"
+                />
+                <Text color="red">{errors.time?.message}</Text>
+                <Button
+                  bg="gray.400"
+                  onClick={() => {
+                    setInputMode("none");
+                  }}
+                >
+                  キャンセル
+                </Button>
+                <PrimaryButton
+                  data-testid="registerButton"
+                  type="submit"
+                  label="登録"
+                  loading={isLoading}
+                />
+              </Stack>
+            </form>
           </>
         )}
-        <p style={{ padding: "4px" }}>{`合計  ${totalTime}/1000 時間`}</p>
-      </Box>
+        {inputMode === "edit" && (
+          <>
+            <form
+              onSubmit={handleSubmit((data) => {
+                onClickEdit(data);
+              })}
+            >
+              <Stack spaceY={4}>
+                <Input
+                  data-testid="editTitle"
+                  {...register("title", {
+                    required: "学習内容が入力されていません",
+                  })}
+                  placeholder="学習内容"
+                />
+                <Text color="red">{errors.title?.message}</Text>
+                <Input
+                  data-testid="editTime"
+                  {...register("time", {
+                    required: "学習時間が入力されていません",
+                    min: {
+                      value: 0,
+                      message: "0以上の値を入力してください",
+                    },
+                  })}
+                  placeholder="学習時間"
+                  type="number"
+                />
+                <Text color="red">{errors.time?.message}</Text>
+                <Input type="hidden" {...register("id")} />
+                <Button
+                  bg="gray.400"
+                  onClick={() => {
+                    setInputMode("none");
+                  }}
+                >
+                  キャンセル
+                </Button>
+                <PrimaryButton
+                  data-testid="editButton"
+                  type="submit"
+                  label="編集を確定"
+                  loading={isLoading}
+                />
+              </Stack>
+            </form>
+          </>
+        )}
+      </Modal>
     </Box>
   );
 };
